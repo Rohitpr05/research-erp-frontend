@@ -22,6 +22,7 @@ const RohitPage = ({ onNavigate, onLogout }) => {
   const [showNewEventModal, setShowNewEventModal] = useState(false);
   const [showForms, setShowForms] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showTeamModal, setShowTeamModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [newEvent, setNewEvent] = useState({
     name: '',
@@ -99,6 +100,14 @@ const RohitPage = ({ onNavigate, onLogout }) => {
     }
   ]);
 
+  // Team members data
+  const teamMembers = [
+    { name: "Rohit pr", regNo: "2360450" },
+    { name: "Elna Benny", regNo: "2360366" },
+    { name: "Jefferson N", regNo: "2360383" },
+    { name: "Hemanth Reddy", regNo: "2360373" }
+  ];
+
   // Load current user on component mount
   useEffect(() => {
     const user = authService.getCurrentUser();
@@ -167,6 +176,10 @@ const RohitPage = ({ onNavigate, onLogout }) => {
 
   const handleSettingsClick = () => {
     alert('Settings functionality - Open settings panel');
+  };
+
+  const handleTeamClick = () => {
+    setShowTeamModal(true);
   };
 
   // Logout functionality
@@ -308,6 +321,49 @@ const RohitPage = ({ onNavigate, onLogout }) => {
       <button className="floating-btn" onClick={handleNewEventClick}>
         New Event
       </button>
+
+      {/* Animated Team Button */}
+      <button className="team-btn" onClick={handleTeamClick} title="View Team">
+        <div className="team-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <span className="team-text">Team</span>
+      </button>
+
+      {/* Team Modal */}
+      {showTeamModal && (
+        <div className="modal-overlay" onClick={() => setShowTeamModal(false)}>
+          <div className="modal-content team-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Project Team</h2>
+              <button className="close-btn" onClick={() => setShowTeamModal(false)}>✕</button>
+            </div>
+            <div className="team-modal-body">
+              <div className="team-grid">
+                {teamMembers.map((member, index) => (
+                  <div key={index} className="team-member-card">
+                    <div className="member-avatar">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                      </svg>
+                    </div>
+                    <div className="member-info">
+                      <h3>{member.name}</h3>
+                      <p>Reg: {member.regNo}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* New Event Modal */}
       {showNewEventModal && (

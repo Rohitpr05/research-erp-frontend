@@ -547,6 +547,62 @@ body {
   box-shadow: 0 6px 20px rgba(25, 118, 210, 0.4);
 }
 
+/* Team Button - Animated */
+.team-btn {
+  position: fixed;
+  bottom: 26px;
+  right: 150px;
+  width: 50px;
+  height: 50px;
+  background: black ;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(156, 39, 176, 0.3);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  animation: teamBounce 2s infinite;
+}
+
+.team-btn:hover {
+  background: linear-gradient(135deg, #8e24aa, #5e35b1);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 25px rgba(156, 39, 176, 0.6);
+  animation-play-state: paused;
+}
+
+.team-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.team-text {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Team Button Animation */
+@keyframes teamBounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
+  60% {
+    transform: translateY(-4px);
+  }
+}
+
 /* Modal Styles */
 .modal-overlay {
   position: fixed;
@@ -604,6 +660,63 @@ body {
 .close-btn:hover {
   background: #e5e7eb;
   color: #374151;
+}
+
+/* Team Modal Specific Styles */
+.team-modal {
+  max-width: 600px;
+}
+
+.team-modal-body {
+  padding: 30px 25px;
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.team-member-card {
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(156, 39, 176, 0.1);
+}
+
+.team-member-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(156, 39, 176, 0.15);
+  background: linear-gradient(135deg, #f1f5f9, #ddd6fe);
+}
+
+.member-avatar {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #9c27b0, #673ab7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.member-info h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.member-info p {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
 }
 
 /* Logout Modal Styles */
@@ -785,6 +898,17 @@ body {
     top: 15px;
     left: 15px;
   }
+
+  .team-btn {
+    bottom: 25px;
+    right: 130px;
+    width: 60px;
+    height: 60px;
+  }
+
+  .team-text {
+    font-size: 9px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -839,6 +963,28 @@ body {
   .back-btn {
     padding: 10px 15px;
     font-size: 13px;
+  }
+
+  .team-btn {
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+  }
+
+  .team-text {
+    font-size: 8px;
+  }
+
+  .floating-btn {
+    bottom: 80px;
+    right: 20px;
+    padding: 12px 20px;
+    font-size: 13px;
+  }
+
+  .team-grid {
+    grid-template-columns: 1fr;
   }
   
   .logout-actions {
