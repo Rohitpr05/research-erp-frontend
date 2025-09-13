@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import authService from './authService';
-import './Login.css';
+import './login.css';
 
 const Login = ({ onLogin }) => {
   const [isLoginMode, setIsLoginMode] = useState(true);
