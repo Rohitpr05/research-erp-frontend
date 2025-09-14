@@ -29,7 +29,6 @@ const Login = ({ onLogin }) => {
       ...prev,
       [name]: value
     }));
-    // Clear error when user starts typing
     if (error) setError('');
     if (success) setSuccess('');
   };
@@ -50,8 +49,7 @@ const Login = ({ onLogin }) => {
 
         const result = await authService.login(usernameOrEmail, formData.password);
         setSuccess(result.message);
-        
-        // Redirect after successful login
+
         setTimeout(() => {
           onLogin();
         }, 1000);
@@ -71,8 +69,7 @@ const Login = ({ onLogin }) => {
         });
 
         setSuccess(result.message + '. You can now login.');
-        
-        // Switch to login mode after successful registration
+
         setTimeout(() => {
           setIsLoginMode(true);
           setFormData({
@@ -95,14 +92,9 @@ const Login = ({ onLogin }) => {
     setShowPassword(!showPassword);
   };
 
+  // Now Google button does nothing (just placeholder)
   const handleGoogleSignIn = () => {
-    console.log('Google Sign-In clicked');
-    // For demo purposes, let's just log in as admin
-    authService.login('deepak', 'deepak123').then(() => {
-      onLogin();
-    }).catch((err) => {
-      setError('Google Sign-In not implemented yet');
-    });
+    setError('Google Sign-In not implemented yet');
   };
 
   const switchMode = () => {
@@ -138,7 +130,6 @@ const Login = ({ onLogin }) => {
               {isLoginMode ? 'Please enter to continue' : 'Create your faculty account'}
             </p>
 
-            {/* Error/Success Messages */}
             {error && (
               <div className="message error-message">
                 {error}
@@ -272,7 +263,6 @@ const Login = ({ onLogin }) => {
               </button>
             )}
 
-            {/* Mode Switch Button */}
             <div className="mode-switch">
               <button type="button" className="switch-btn" onClick={switchMode} disabled={loading}>
                 {isLoginMode 
@@ -286,7 +276,6 @@ const Login = ({ onLogin }) => {
               not be called research"
             </p>
 
-            {/* Demo credentials info */}
             {isLoginMode && (
               <div className="demo-info">
                 <p><strong>Demo Credentials:</strong></p>
