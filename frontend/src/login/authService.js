@@ -1,407 +1,258 @@
-// authService.js - Local JSON-based authentication service
+// authService.js - Updated for Research ERP MongoDB Backend
+// Replace your current authService.js content with this code
 
 class AuthService {
   constructor() {
-    this.users = this.loadUsers();
-    this.currentUser = this.loadCurrentUser();
+    this.baseURL = 'http://localhost:5000/api/auth';
+    this.tokenKey = 'research_erp_token';
+    this.userKey = 'research_erp_user';
   }
 
-  // Default users factory (so we can reuse)
-  getDefaultUsers() {
-    return {
-      users: [
-        {
-          id: 1,
-          username: "deepak",
-          email: "deepak@christuniversity.in",
-          password: "deepak123",
-          fullName: "Dr. Deepak",
-          department: "Computer Science",
-          role: "faculty",
-          registeredAt: new Date().toISOString(),
-          lastLogin: null,
-          isActive: true
-        },
-        {
-          id: 2,
-          username: "john.doe",
-          email: "john.doe@christuniversity.in",
-          password: "password123",
-          fullName: "Dr. John Doe",
-          department: "Mathematics",
-          role: "faculty",
-          registeredAt: new Date().toISOString(),
-          lastLogin: null,
-          isActive: true
-        }
-      ],
-      settings: {
-        passwordMinLength: 6,
-        allowedEmailDomains: ["christuniversity.in", "btech.christuniversity.in"],
-        sessionTimeout: 3600000,
-        maxLoginAttempts: 5
-      }
+  // Helper method to handle API requests
+  async apiRequest(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+      },
+      ...options
     };
-  }
 
-  // Load users from localStorage (simulating JSON file)
-  loadUsers() {
-    const defaultUsers = this.getDefaultUsers();
-    const stored = localStorage.getItem('users_db');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        // Validate shape
-        if (!parsed || !Array.isArray(parsed.users)) {
-          console.warn('users_db has invalid format — resetting to defaults');
-          this.saveUsers(defaultUsers);
-          return defaultUsers;
-        }
-        return parsed;
-      } catch (error) {
-        console.error('Error parsing users data:', error);
-        // Reset to defaults to avoid app crash
-        this.saveUsers(defaultUsers);
-        return defaultUsers;
-      }
-    } else {
-      // Initialize with default users
-      this.saveUsers(defaultUsers);
-      return defaultUsers;
+    // Add authorization header if token exists
+    const token = this.getToken();
+    if (token && !config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-  }
 
-  // Save users to localStorage
-  saveUsers(usersData) {
     try {
-      localStorage.setItem('users_db', JSON.stringify(usersData, null, 2));
-      this.users = usersData;
-    } catch (error) {
-      console.error('Error saving users data:', error);
-    }
-  }
+      console.log(`📡 API Request: ${config.method || 'GET'} ${url}`);
+      
+      const response = await fetch(url, config);
+      const data = await response.json();
 
-  // Load current user session
-  loadCurrentUser() {
-    const currentUser = localStorage.getItem('current_user');
-    if (currentUser) {
-      try {
-        return JSON.parse(currentUser);
-      } catch (error) {
-        console.error('Error parsing current user:', error);
-        return null;
+      console.log(`📡 Response: ${response.status} - ${data.message || 'Success'}`);
+
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error! status: ${response.status}`);
       }
-    }
-    return null;
-  }
 
-  // Save current user session
-  saveCurrentUser(user) {
-    try {
-      const userSession = {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        fullName: user.fullName,
-        department: user.department,
-        role: user.role,
-        loginTime: new Date().toISOString()
-      };
-      localStorage.setItem('current_user', JSON.stringify(userSession));
-      this.currentUser = userSession;
+      return data;
     } catch (error) {
-      console.error('Error saving current user:', error);
+      // Enhanced error handling for better user experience
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        console.error('🔌 Connection Error: Cannot connect to backend server');
+        throw new Error('Cannot connect to server. Please ensure the backend is running on localhost:5000');
+      }
+      
+      console.error('📡 API Error:', error.message);
+      throw error;
     }
   }
 
-  // ✅ Robust Login function (trim + case-insensitive + trim stored password)
-  async login(usernameOrEmail, password) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (!this.users || !Array.isArray(this.users.users)) {
-          reject({ success: false, message: "User database not found or corrupt" });
-          return;
-        }
-
-        if (!usernameOrEmail || !password) {
-          reject({ success: false, message: "Please provide username/email and password" });
-          return;
-        }
-
-        const cleanInput = String(usernameOrEmail).trim().toLowerCase();
-        const cleanPassword = String(password).trim();
-
-        const user = this.users.users.find(u => {
-          const uname = String(u.username || '').trim().toLowerCase();
-          const uemail = String(u.email || '').trim().toLowerCase();
-          const upwd = String(u.password || '').trim();
-          return (uname === cleanInput || uemail === cleanInput) && upwd === cleanPassword && u.isActive;
-        });
-
-        if (user) {
-          // Update last login
-          user.lastLogin = new Date().toISOString();
-          this.saveUsers(this.users);
-
-          // Save user session
-          this.saveCurrentUser(user);
-
-          resolve({
-            success: true,
-            user: {
-              id: user.id,
-              username: user.username,
-              email: user.email,
-              fullName: user.fullName,
-              department: user.department,
-              role: user.role
-            },
-            message: 'Login successful'
-          });
-        } else {
-          reject({
-            success: false,
-            message: 'Invalid username/email or password'
-          });
-        }
-      }, 250); // small simulated delay
-    });
-  }
-
-  // Register function
+  // Register a new user (same interface as your original)
   async register(userData) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const { username, email, password, fullName, department } = userData;
-
-        // Validation
-        if (!username || !email || !password || !fullName) {
-          reject({
-            success: false,
-            message: 'All required fields must be filled'
-          });
-          return;
-        }
-
-        if (password.length < this.users.settings.passwordMinLength) {
-          reject({
-            success: false,
-            message: `Password must be at least ${this.users.settings.passwordMinLength} characters long`
-          });
-          return;
-        }
-
-        // Check if user already exists
-        const existingUser = this.users.users.find(u => 
-          u.username === username || u.email === email
-        );
-
-        if (existingUser) {
-          reject({
-            success: false,
-            message: 'Username or email already exists'
-          });
-          return;
-        }
-
-        // Check email domain
-        const emailDomain = email.split('@')[1];
-        if (!this.users.settings.allowedEmailDomains.includes(emailDomain)) {
-          reject({
-            success: false,
-            message: `Email must be from allowed domains: ${this.users.settings.allowedEmailDomains.join(', ')}`
-          });
-          return;
-        }
-
-        // Create new user
-        const newUser = {
-          id: Math.max(...this.users.users.map(u => u.id)) + 1,
-          username,
-          email,
-          password,
-          fullName,
-          department: department || 'Not specified',
-          role: 'faculty',
-          registeredAt: new Date().toISOString(),
-          lastLogin: null,
-          isActive: true
-        };
-
-        // Add user to database
-        this.users.users.push(newUser);
-        this.saveUsers(this.users);
-
-        resolve({
-          success: true,
-          user: {
-            id: newUser.id,
-            username: newUser.username,
-            email: newUser.email,
-            fullName: newUser.fullName,
-            department: newUser.department,
-            role: newUser.role
-          },
-          message: 'Registration successful'
-        });
-      }, 500);
-    });
-  }
-
-  // Logout function
-  logout() {
-    localStorage.removeItem('current_user');
-    this.currentUser = null;
-  }
-
-  // Check if user is logged in
-  isLoggedIn() {
-    return this.currentUser !== null;
-  }
-
-  // Get current user
-  getCurrentUser() {
-    return this.currentUser;
-  }
-
-  // Get all users (for admin purposes)
-  getAllUsers() {
-    return (this.users && Array.isArray(this.users.users)) ? this.users.users.map(user => ({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      fullName: user.fullName,
-      department: user.department,
-      role: user.role,
-      registeredAt: user.registeredAt,
-      lastLogin: user.lastLogin,
-      isActive: user.isActive
-    })) : [];
-  }
-
-  // Update user profile
-  async updateProfile(userId, updateData) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const userIndex = this.users.users.findIndex(u => u.id === userId);
-        
-        if (userIndex === -1) {
-          reject({
-            success: false,
-            message: 'User not found'
-          });
-          return;
-        }
-
-        // Update user data (except sensitive fields)
-        const allowedFields = ['fullName', 'department', 'email'];
-        allowedFields.forEach(field => {
-          if (updateData[field] !== undefined) {
-            this.users.users[userIndex][field] = updateData[field];
-          }
-        });
-
-        this.saveUsers(this.users);
-
-        // Update current session if it's the same user
-        if (this.currentUser && this.currentUser.id === userId) {
-          this.saveCurrentUser(this.users.users[userIndex]);
-        }
-
-        resolve({
-          success: true,
-          message: 'Profile updated successfully',
-          user: {
-            id: this.users.users[userIndex].id,
-            username: this.users.users[userIndex].username,
-            email: this.users.users[userIndex].email,
-            fullName: this.users.users[userIndex].fullName,
-            department: this.users.users[userIndex].department,
-            role: this.users.users[userIndex].role
-          }
-        });
-      }, 300);
-    });
-  }
-
-  // Change password
-  async changePassword(userId, currentPassword, newPassword) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        const user = this.users.users.find(u => u.id === userId);
-        
-        if (!user) {
-          reject({
-            success: false,
-            message: 'User not found'
-          });
-          return;
-        }
-
-        if (String(user.password).trim() !== String(currentPassword).trim()) {
-          reject({
-            success: false,
-            message: 'Current password is incorrect'
-          });
-          return;
-        }
-
-        if (newPassword.length < this.users.settings.passwordMinLength) {
-          reject({
-            success: false,
-            message: `Password must be at least ${this.users.settings.passwordMinLength} characters long`
-          });
-          return;
-        }
-
-        user.password = newPassword;
-        this.saveUsers(this.users);
-
-        resolve({
-          success: true,
-          message: 'Password changed successfully'
-        });
-      }, 300);
-    });
-  }
-
-  // Export users data (for backup)
-  exportUsersData() {
-    return JSON.stringify(this.users, null, 2);
-  }
-
-  // Import users data (for restore)
-  importUsersData(jsonData) {
     try {
-      const data = JSON.parse(jsonData);
-      if (data.users && Array.isArray(data.users)) {
-        this.saveUsers(data);
-        return { success: true, message: 'Data imported successfully' };
-      } else {
-        throw new Error('Invalid data format');
-      }
+      console.log('📝 Registering user:', userData.username);
+      
+      const response = await this.apiRequest('/register', {
+        method: 'POST',
+        body: JSON.stringify(userData)
+      });
+
+      console.log('✅ Registration successful');
+      
+      return {
+        success: true,
+        message: response.message
+      };
     } catch (error) {
-      return { success: false, message: 'Failed to import data: ' + error.message };
+      console.error('❌ Registration failed:', error.message);
+      throw new Error(error.message || 'Registration failed');
     }
   }
 
-  // Reset users to defaults (useful if localStorage got corrupted)
-  resetToDefaults() {
-    const defaults = this.getDefaultUsers();
-    this.saveUsers(defaults);
-    try { localStorage.removeItem('current_user'); } catch (e) {}
-    this.users = this.loadUsers();
-    this.currentUser = this.loadCurrentUser();
-    return { success: true, message: 'Reset to default users' };
+  // Login user (same interface as your original)
+  async login(identifier, password) {
+    try {
+      console.log('🔐 Attempting login for:', identifier);
+      
+      const response = await this.apiRequest('/login', {
+        method: 'POST',
+        body: JSON.stringify({ identifier, password })
+      });
+
+      if (response.success) {
+        // Store token and user data in localStorage (same as before)
+        this.setToken(response.token);
+        this.setUserData(response.user);
+        console.log('✅ Login successful for:', response.user.fullName);
+      }
+
+      return {
+        success: true,
+        message: response.message,
+        user: response.user
+      };
+    } catch (error) {
+      console.error('❌ Login failed:', error.message);
+      throw new Error(error.message || 'Login failed');
+    }
   }
 
-  // Debug helper: returns current users object (inspect in console)
-  dumpUsers() {
-    return this.users;
+  // Verify if current token is valid
+  async verifyToken() {
+    const token = this.getToken();
+    if (!token) {
+      console.log('🔍 No token found');
+      return false;
+    }
+
+    try {
+      console.log('🔍 Verifying token...');
+      
+      const response = await this.apiRequest('/verify-token', {
+        method: 'POST',
+        body: JSON.stringify({ token })
+      });
+
+      if (response.success) {
+        // Update user data
+        this.setUserData(response.user);
+        console.log('✅ Token verified for:', response.user.fullName);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('❌ Token verification failed:', error.message);
+      this.logout();
+      return false;
+    }
+  }
+
+  // Get user profile
+  async getProfile() {
+    try {
+      console.log('👤 Fetching user profile...');
+      
+      const response = await this.apiRequest('/profile');
+      
+      console.log('✅ Profile fetched');
+      return response.user;
+    } catch (error) {
+      console.error('❌ Profile fetch failed:', error.message);
+      throw new Error(error.message || 'Failed to fetch profile');
+    }
+  }
+
+  // Logout user (same as before)
+  logout() {
+    console.log('🚪 Logging out user...');
+    
+    localStorage.removeItem(this.tokenKey);
+    localStorage.removeItem(this.userKey);
+    
+    console.log('✅ Logout successful');
+  }
+
+  // Check if user is logged in (same as before)
+  isLoggedIn() {
+    const token = this.getToken();
+    const userData = this.getUserData();
+    const isLoggedIn = !!(token && userData);
+    
+    if (isLoggedIn) {
+      console.log('✅ User is logged in:', userData.fullName);
+    }
+    
+    return isLoggedIn;
+  }
+
+  // Get stored token (same as before)
+  getToken() {
+    return localStorage.getItem(this.tokenKey);
+  }
+
+  // Set token (same as before)
+  setToken(token) {
+    localStorage.setItem(this.tokenKey, token);
+  }
+
+  // Get user data (same as before)
+  getUserData() {
+    const userData = localStorage.getItem(this.userKey);
+    return userData ? JSON.parse(userData) : null;
+  }
+
+  // Set user data (same as before)
+  setUserData(userData) {
+    localStorage.setItem(this.userKey, JSON.stringify(userData));
+  }
+
+  // Get current user info (same as before)
+  getCurrentUser() {
+    return this.getUserData();
+  }
+
+  // Check if user has specific role
+  hasRole(role) {
+    const userData = this.getUserData();
+    return userData && userData.role === role;
+  }
+
+  // Check if user is admin
+  isAdmin() {
+    return this.hasRole('admin');
+  }
+
+  // Check if user is faculty
+  isFaculty() {
+    return this.hasRole('faculty');
+  }
+
+  // Check if user is student
+  isStudent() {
+    return this.hasRole('student');
+  }
+
+  // Server health check (useful for debugging)
+  async checkServerHealth() {
+    try {
+      console.log('🏥 Checking server health...');
+      
+      const response = await fetch('http://localhost:5000/api/health');
+      const data = await response.json();
+      
+      if (response.ok) {
+        console.log('✅ Server is healthy:', data.message);
+      } else {
+        console.log('⚠️ Server health check failed');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('❌ Server health check failed:', error.message);
+      return { 
+        success: false, 
+        error: error.message,
+        message: 'Server is not responding. Make sure backend is running on localhost:5000'
+      };
+    }
+  }
+
+  // Backward compatibility methods (if your existing code uses these)
+  async authenticateUser(username, password) {
+    console.log('⚠️ Using legacy method. Consider using login() instead.');
+    return this.login(username, password);
+  }
+
+  async createUser(userData) {
+    console.log('⚠️ Using legacy method. Consider using register() instead.');
+    return this.register(userData);
   }
 }
 
-// Create singleton instance
+// Create and export a single instance (same as before)
 const authService = new AuthService();
 
 export default authService;
