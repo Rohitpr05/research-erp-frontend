@@ -1,0 +1,8 @@
+[build]
+builder = "nixpacks"
+
+[build.command]
+command = "npm run install-all && npm run build"
+
+[deploy]
+startCommand = "npm start"

@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const connectDB = require('./config/database');
 const authRoutes = require('./routes/auth');
 require('dotenv').config();
@@ -13,11 +14,10 @@ connectDB();
 // Middleware
 app.use(cors({
   origin: [
-    'http://localhost:3000', 
-    'http://localhost:3001', 
-    'http://localhost:5173',  // Vite default port
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:5173'
+    'http://localhost:3000',
+    'http://localhost:5173',
+    /https:\/\/.*\.railway\.app$/,  // Allow all Railway domains
+    /https:\/\/.*\.vercel\.app$/    // Just in case
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -52,8 +52,11 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Root route - API documentation
-app.get('/', (req, res) => {
+// Serve static files from React build
+app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+// Root route - API documentation (this should be placed before the catch-all route)
+app.get('/api', (req, res) => {
   res.json({
     message: 'Research ERP Faculty Authentication API',
     version: '1.0.0',
@@ -116,20 +119,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Handle 404 routes
-app.use('*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Route ${req.originalUrl} not found`,
-    availableRoutes: [
-      'GET /',
-      'GET /api/health',
-      'POST /api/auth/register',
-      'POST /api/auth/login',
-      'POST /api/auth/verify-token',
-      'GET /api/auth/profile'
-    ]
-  });
+// Handle React routing, return all requests to React app
+// This should be the LAST route handler
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
 
 // Handle unhandled promise rejections
